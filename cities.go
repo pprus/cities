@@ -5,11 +5,20 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
+var cities = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Name: "city_total",
+		Help: "Per-city Counts",
+	},
+	[]string{"city"},
+)
+
 type cityCount struct {
-	Count int
+	Count float64
 	City  string
 }
 
@@ -23,6 +32,12 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Println(cc)
+
+	cities.WithLabelValues(cc.City).Add(cc.Count)
+}
+
+func init() {
+	prometheus.MustRegister(cities)
 }
 
 func main() {
